@@ -19,10 +19,14 @@ class Settings(BaseSettings):
     # Full admin access to Supabase. Server only, never sent to a browser.
     supabase_secret_key: SecretStr
 
+    # Embeddings for the knowledge base (and, later, the LLM). Needed by `python -m app.seed`.
+    mistral_api_key: SecretStr | None = None
+
     # Browsers accept Secure cookies on http://localhost, so this stays on in development too.
     cookie_secure: bool = True
 
 
 @lru_cache
 def get_settings() -> Settings:
-    return Settings()
+    # The values come from .env and the environment, which type checkers can't see.
+    return Settings()  # pyright: ignore[reportCallIssue]

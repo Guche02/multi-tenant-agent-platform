@@ -1,0 +1,27 @@
+# The live catalogue. Prices are in NPR. The knowledge base describes these products by the
+# same names and SKUs, but never states prices or stock: those always come from this data.
+# A few low or zero stock levels are deliberate, so "not enough stock" can be demonstrated.
+
+- {sku: HT-BLK-001, name: Ilam First Flush, category: Black Tea, price: 1450, stock: 40}
+- {sku: HT-BLK-002, name: Ilam Second Flush Muscatel, category: Black Tea, price: 1350, stock: 35}
+- {sku: HT-BLK-003, name: Dhankuta Autumn Flush, category: Black Tea, price: 1200, stock: 25}
+- {sku: HT-BLK-004, name: Himalayan Breakfast Blend, category: Black Tea, price: 850, stock: 60}
+- {sku: HT-BLK-005, name: Golden Tips, category: Black Tea, price: 2200, stock: 12}
+- {sku: HT-GRN-001, name: Kanyam Spring Green, category: Green Tea, price: 1100, stock: 30}
+- {sku: HT-GRN-002, name: Himalayan Steamed Green, category: Green Tea, price: 950, stock: 3}
+- {sku: HT-GRN-003, name: Jasmine Green Pearls, category: Green Tea, price: 1650, stock: 18}
+- {sku: HT-OOL-001, name: Mist Valley Oolong, category: Oolong Tea, price: 1800, stock: 15}
+- {sku: HT-OOL-002, name: Roasted Hill Oolong, category: Oolong Tea, price: 1700, stock: 0}
+- {sku: HT-WHT-001, name: Silver Needle, category: White Tea, price: 2600, stock: 8}
+- {sku: HT-WHT-002, name: Moonlight White, category: White Tea, price: 1900, stock: 10}
+- {sku: HT-HRB-001, name: Tulsi Lemongrass Infusion, category: Herbal Tea, price: 650, stock: 45}
+- {sku: HT-HRB-002, name: Himalayan Chamomile, category: Herbal Tea, price: 700, stock: 38}
+- {sku: HT-HRB-003, name: Ginger Turmeric Herbal, category: Herbal Tea, price: 600, stock: 50}
+- {sku: HT-CHI-001, name: Classic Masala Chai, category: Masala Chai, price: 750, stock: 55}
+- {sku: HT-CHI-002, name: Cardamom Chai, category: Masala Chai, price: 800, stock: 20}
+- {sku: HT-WAR-001, name: Clay Teapot, category: Teaware, price: 2400, stock: 10}
+- {sku: HT-WAR-002, name: Glass Gaiwan, category: Teaware, price: 1500, stock: 14}
+- {sku: HT-WAR-003, name: Cast Iron Kettle, category: Teaware, price: 4800, stock: 5}
+- {sku: HT-WAR-004, name: Bamboo Tea Scoop, category: Teaware, price: 250, stock: 80}
+- {sku: HT-WAR-005, name: Stainless Steel Infuser, category: Teaware, price: 450, stock: 65}
+- {sku: HT-GFT-001, name: Himalayan Tasting Set, category: Gift Sets, price: 3200, stock: 7}

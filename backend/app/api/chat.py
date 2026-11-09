@@ -123,10 +123,7 @@ async def _stream_reply(
         logger.exception("Agent failed in conversation %s", context.conversation_id)
         failed = True
     finally:
-        # Runs on success, on failure, and when the user presses Stop (the client disconnects
-        # and this generator is cancelled). The shield lets the save finish despite the cancel,
-        # so the saved conversation always matches what the user saw.
-        if reply:
+
             with anyio.CancelScope(shield=True):
                 message_id = await save_reply(context, "".join(reply))
 

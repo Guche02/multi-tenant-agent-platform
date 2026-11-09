@@ -1,0 +1,9 @@
+# Each practitioner and the services they offer (names must match services.yaml).
+# Some services have two practitioners, so a customer can choose or take whoever is free.
+
+- name: Anjali Shrestha
+  services: [Swedish Massage, Deep Tissue Massage, Hot Stone Massage]
+- name: Rohan Karki
+  services: [Physiotherapy Assessment, Physiotherapy Follow-up, Sports Injury Rehabilitation, Deep Tissue Massage]
+- name: Maya Gurung
+  services: [Private Yoga Session, Prenatal Yoga, Swedish Massage]

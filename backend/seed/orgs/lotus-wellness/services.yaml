@@ -1,0 +1,12 @@
+# The live service list. Prices are in NPR. The knowledge base describes these services by the
+# same names, but never states durations or prices: those always come from this data.
+# Every session is one-to-one with a single practitioner.
+
+- {name: Swedish Massage, duration_minutes: 60, price: 3500}
+- {name: Deep Tissue Massage, duration_minutes: 60, price: 4200}
+- {name: Hot Stone Massage, duration_minutes: 90, price: 5500}
+- {name: Physiotherapy Assessment, duration_minutes: 60, price: 3000}
+- {name: Physiotherapy Follow-up, duration_minutes: 45, price: 2200}
+- {name: Sports Injury Rehabilitation, duration_minutes: 60, price: 3800}
+- {name: Private Yoga Session, duration_minutes: 60, price: 2500}
+- {name: Prenatal Yoga, duration_minutes: 60, price: 2800}

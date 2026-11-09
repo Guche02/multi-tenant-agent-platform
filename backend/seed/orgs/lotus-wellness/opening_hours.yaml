@@ -1,0 +1,9 @@
+# Weekly opening hours in studio time (Asia/Kathmandu). Weekday 0 is Monday, 6 is Sunday.
+# A day with no entry is a closed day: the studio closes on Saturdays, Nepal's weekly holiday.
+
+- {weekday: 6, opens_at: "07:00", closes_at: "19:00"}  # Sunday
+- {weekday: 0, opens_at: "07:00", closes_at: "19:00"}  # Monday
+- {weekday: 1, opens_at: "07:00", closes_at: "19:00"}  # Tuesday
+- {weekday: 2, opens_at: "07:00", closes_at: "19:00"}  # Wednesday
+- {weekday: 3, opens_at: "07:00", closes_at: "19:00"}  # Thursday
+- {weekday: 4, opens_at: "07:00", closes_at: "17:00"}  # Friday

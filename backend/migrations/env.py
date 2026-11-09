@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 
 from app.config import get_settings
 from app.db.models import Base
+from app.retrieval import KB_DB_TABLE
 
 config = context.config
 if config.config_file_name is not None:
@@ -23,6 +24,10 @@ def include_name(name, type_, parent_names) -> bool:
     # Only our own schema. Supabase's schemas (auth, storage, ...) are never compared or changed.
     if type_ == "schema":
         return name in (None, "public")
+    # The knowledge-base table is created and managed by LlamaIndex. Without this, autogenerate
+    # would see a table missing from our models and write a migration that drops it.
+    if type_ == "table":
+        return name != KB_DB_TABLE
     return True
 
 

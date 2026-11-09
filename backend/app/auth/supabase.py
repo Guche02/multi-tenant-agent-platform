@@ -96,9 +96,12 @@ class SupabaseAuth:
             or claims.get("is_anonymous")
         ):
             raise InvalidToken
+        subject = claims.get("sub")
+        if not subject:
+            raise InvalidToken
         try:
-            return uuid.UUID(claims["sub"])
-        except (KeyError, ValueError) as error:
+            return uuid.UUID(subject)
+        except ValueError as error:
             raise InvalidToken from error
 
     async def refresh(self, refresh_token: str) -> Session:

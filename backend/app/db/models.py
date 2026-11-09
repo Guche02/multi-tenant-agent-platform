@@ -249,11 +249,30 @@ class Service(Base):
 
 class Practitioner(Base):
     __tablename__ = "practitioners"
-    __table_args__ = (UniqueConstraint("org_id", "id"),)
+    __table_args__ = (
+        UniqueConstraint("org_id", "id"),
+        UniqueConstraint("org_id", "name"),
+    )
 
     id: Mapped[uuid.UUID] = _id_column()
     org_id: Mapped[uuid.UUID] = _org_id_column()
     name: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class PractitionerService(Base):
+    """Which practitioners offer which services. Both must belong to the same org."""
+
+    __tablename__ = "practitioner_services"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["org_id", "practitioner_id"], ["practitioners.org_id", "practitioners.id"], ondelete="CASCADE"
+        ),
+        ForeignKeyConstraint(["org_id", "service_id"], ["services.org_id", "services.id"], ondelete="CASCADE"),
+    )
+
+    org_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
+    practitioner_id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True)
+    service_id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True)
 
 
 class OpeningHours(Base):
@@ -332,3 +351,4 @@ class Booking(Base):
     cancellation_fee: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False, server_default="0")
     cancelled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = _created_at_column()
+
