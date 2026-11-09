@@ -8,7 +8,7 @@ import asyncio
 from sqlalchemy.dialects.postgresql import insert
 
 from app.db.models import Organization
-from app.db.session import get_db
+from app.db.session import session_factory
 
 ORGANIZATIONS = [
     {"slug": "himali-tea", "name": "Himali Tea House"},
@@ -17,7 +17,7 @@ ORGANIZATIONS = [
 
 
 async def seed_organizations() -> None:
-    async for db in get_db():
+    async with session_factory()() as db:
         await db.execute(
             insert(Organization).values(ORGANIZATIONS).on_conflict_do_nothing(index_elements=["slug"])
         )

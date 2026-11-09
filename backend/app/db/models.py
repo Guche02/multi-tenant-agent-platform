@@ -9,6 +9,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     ForeignKeyConstraint,
+    Index,
     Integer,
     MetaData,
     Numeric,
@@ -119,6 +120,10 @@ class Message(Base):
             ondelete="CASCADE",
         ),
         CheckConstraint("role IN ('user', 'assistant')", name="valid_role"),
+        # Loading a conversation's history, in order.
+        Index("ix_messages_conversation_id_created_at", "conversation_id", "created_at"),
+        # The chat rate limit: a user's messages in the last minute.
+        Index("ix_messages_user_id_created_at", "user_id", "created_at"),
     )
 
     id: Mapped[uuid.UUID] = _id_column()

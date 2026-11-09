@@ -2,14 +2,21 @@ import logging
 import uuid
 
 from fastapi import APIRouter, HTTPException, Request, Response, status
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, EmailStr, Field, field_validator
 from sqlalchemy.exc import IntegrityError
 
-from app.auth.cookies import ACCESS_COOKIE, clear_session_cookies, set_session_cookies
+from app.auth.cookies import (
+    ACCESS_COOKIE,
+    REFRESH_COOKIE,
+    clear_session_cookies,
+    set_session_cookies,
+)
 from app.auth.supabase import (
     AuthServiceError,
     EmailAlreadyRegistered,
     InvalidCredentials,
+    InvalidToken,
     SupabaseAuthDep,
     WeakPassword,
 )
@@ -117,6 +124,30 @@ async def login(
 
     set_session_cookies(response, session)
     return _auth_out(user, org)
+
+
+@router.post("/auth/refresh", status_code=status.HTTP_204_NO_CONTENT)
+async def refresh(request: Request, supabase: SupabaseAuthDep, response: Response) -> Response:
+    """Swaps the refresh-token cookie for a new pair of session cookies.
+
+    Supabase refresh tokens are single-use, so the frontend should send one refresh at a time
+    and retry the failed request after it succeeds.
+    """
+    refresh_token = request.cookies.get(REFRESH_COOKIE)
+    if not refresh_token:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Not signed in.")
+    try:
+        session = await supabase.refresh(refresh_token)
+    except InvalidToken:
+        # Revoked, expired or already used: the user has to log in again. Drop the dead cookies.
+        expired = JSONResponse({"detail": "Session expired. Please log in again."}, status_code=401)
+        clear_session_cookies(expired)
+        return expired
+    except AuthServiceError as error:
+        raise HTTPException(error.status_code, error.detail)
+    set_session_cookies(response, session)
+    response.status_code = status.HTTP_204_NO_CONTENT
+    return response
 
 
 @router.post("/auth/logout", status_code=status.HTTP_204_NO_CONTENT)

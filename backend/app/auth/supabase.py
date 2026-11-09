@@ -34,6 +34,10 @@ class WeakPassword(Exception):
     pass
 
 
+class InvalidToken(Exception):
+    """An access or refresh token that is malformed, expired, revoked or not ours."""
+
+
 def _service_error(error: AuthError) -> AuthServiceError:
     if isinstance(error, AuthRetryableError):
         return AuthServiceError(503, "The sign-in service is unavailable. Try again shortly.")
@@ -52,9 +56,67 @@ class SupabaseAuth:
             headers={"apikey": secret_key, "Authorization": f"Bearer {secret_key}"},
             http_client=self._http,
         )
+        # Long-lived, so the project's public signing keys stay cached between requests.
+        # It only verifies tokens and never holds a session.
+        self._verifier = self._user_client()
+
+    def _user_client(self) -> AsyncGoTrueClient:
+        return AsyncGoTrueClient(
+            url=self._auth_url,
+            headers=self._public_headers,
+            http_client=self._http,
+            persist_session=False,
+            auto_refresh_token=False,
+        )
 
     async def close(self) -> None:
         await self._http.aclose()
+
+    async def verify_access_token(self, access_token: str) -> uuid.UUID:
+        """Returns the user id in a valid access token.
+
+        Checks the signature against the project's public keys (fetched once, then cached),
+        so a normal request makes no call to Supabase. A token revoked by logout stays valid
+        here until it expires.
+        """
+        try:
+            response = await self._verifier.get_claims(jwt=access_token)
+        except AuthRetryableError as error:
+            raise _service_error(error) from error
+        except AuthError as error:
+            raise InvalidToken from error
+        except Exception as error:
+            # Anything else the token's contents make the library raise is still a bad token.
+            raise InvalidToken from error
+        claims = response["claims"] if response else {}
+        # Only signed-in users: not the anon key, the service key or an anonymous sign-in.
+        if (
+            claims.get("role") != "authenticated"
+            or claims.get("aud") != "authenticated"
+            or claims.get("is_anonymous")
+        ):
+            raise InvalidToken
+        try:
+            return uuid.UUID(claims["sub"])
+        except (KeyError, ValueError) as error:
+            raise InvalidToken from error
+
+    async def refresh(self, refresh_token: str) -> Session:
+        """Swaps a refresh token for a new session. Each refresh token works only once."""
+        client = self._user_client()
+        try:
+            response = await client.refresh_session(refresh_token)
+        except AuthApiError as error:
+            if error.status == 429:
+                raise _service_error(error) from error
+            if 400 <= error.status < 500:
+                raise InvalidToken from error
+            raise _service_error(error) from error
+        except AuthError as error:
+            raise _service_error(error) from error
+        if response.session is None:
+            raise InvalidToken
+        return response.session
 
     async def create_user(self, email: str, password: str) -> uuid.UUID:
         # The admin API marks the email as confirmed, so no confirmation email is needed.
@@ -80,13 +142,7 @@ class SupabaseAuth:
     async def sign_in(self, email: str, password: str) -> Session:
         # A new client per sign-in: the library keeps the signed-in session in the client,
         # and a shared client would hold one user's session while serving another's request.
-        client = AsyncGoTrueClient(
-            url=self._auth_url,
-            headers=self._public_headers,
-            http_client=self._http,
-            persist_session=False,
-            auto_refresh_token=False,
-        )
+        client = self._user_client()
         try:
             response = await client.sign_in_with_password({"email": email, "password": password})
         except AuthApiError as error:
