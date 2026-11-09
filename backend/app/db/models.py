@@ -63,35 +63,21 @@ class Organization(Base):
 
 
 class User(Base):
+    """The org and role of a Supabase Auth user. Supabase holds the password and the sessions."""
+
     __tablename__ = "users"
     __table_args__ = (
-        # The same email can register separately with each org.
-        UniqueConstraint("org_id", "email"),
+        # Supabase Auth allows one account per email, so an email belongs to one org only.
+        UniqueConstraint("email"),
         UniqueConstraint("org_id", "id"),
         CheckConstraint("role IN ('customer', 'admin')", name="valid_role"),
     )
 
-    id: Mapped[uuid.UUID] = _id_column()
+    # The Supabase Auth user id, never generated here.
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True)
     org_id: Mapped[uuid.UUID] = _org_id_column()
     email: Mapped[str] = mapped_column(Text, nullable=False)
-    password_hash: Mapped[str] = mapped_column(Text, nullable=False)
     role: Mapped[str] = mapped_column(Text, nullable=False)
-    created_at: Mapped[datetime] = _created_at_column()
-
-
-class Session(Base):
-    __tablename__ = "sessions"
-    __table_args__ = (
-        ForeignKeyConstraint(
-            ["org_id", "user_id"], ["users.org_id", "users.id"], ondelete="CASCADE"
-        ),
-    )
-
-    # A hash of the cookie's token, so a database leak doesn't expose usable sessions.
-    token_hash: Mapped[str] = mapped_column(Text, primary_key=True)
-    org_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
-    user_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
-    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     created_at: Mapped[datetime] = _created_at_column()
 
 
