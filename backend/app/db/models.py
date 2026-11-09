@@ -4,6 +4,7 @@ from decimal import Decimal
 
 from sqlalchemy import (
     CheckConstraint,
+    Column,
     Date,
     DateTime,
     ForeignKey,
@@ -12,6 +13,7 @@ from sqlalchemy import (
     MetaData,
     Numeric,
     SmallInteger,
+    Table,
     Text,
     Time,
     UniqueConstraint,
@@ -34,6 +36,11 @@ class Base(DeclarativeBase):
             "pk": "pk_%(table_name)s",
         }
     )
+
+
+# Supabase Auth's own user table. It lives in a separate MetaData, so our migrations
+# can point foreign keys at it but never create or change it.
+auth_users = Table("users", MetaData(schema="auth"), Column("id", Uuid, primary_key=True))
 
 
 def _id_column() -> Mapped[uuid.UUID]:
@@ -73,8 +80,11 @@ class User(Base):
         CheckConstraint("role IN ('customer', 'admin')", name="valid_role"),
     )
 
-    # The Supabase Auth user id, never generated here.
-    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True)
+    # The Supabase Auth user id, never generated here. Deleting the Supabase user deletes this row,
+    # unless the user still has orders or bookings, which block the delete.
+    id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey(auth_users.c.id, ondelete="CASCADE"), primary_key=True
+    )
     org_id: Mapped[uuid.UUID] = _org_id_column()
     email: Mapped[str] = mapped_column(Text, nullable=False)
     role: Mapped[str] = mapped_column(Text, nullable=False)

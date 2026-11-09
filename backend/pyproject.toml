@@ -4,11 +4,13 @@ version = "0.1.0"
 description = "Multi-tenant AI agent platform backend"
 requires-python = ">=3.14"
 dependencies = [
+    "alembic>=1.20.1",
     "asyncpg>=0.32.0",
     "fastapi>=0.162.2",
     "pydantic-settings>=2.16.2",
     "pydantic[email]>=2.14.3",
     "sqlalchemy[asyncio]>=2.1.8",
     "supabase>=2.34.1",
+    "truststore>=0.10.5",
     "uvicorn[standard]>=0.54.0",
 ]
