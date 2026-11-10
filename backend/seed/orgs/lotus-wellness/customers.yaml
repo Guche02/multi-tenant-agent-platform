@@ -1,0 +1,26 @@
+# Test customers, created by the seed through the Supabase admin API (safe to re-run).
+# The password is for these fictional demo accounts only; the README lists it.
+#
+# Past bookings, in studio time (Asia/Kathmandu). Each must fall inside opening hours on an open
+# day; the seed checks this. Prices are the service's current price. A cancelled booking's fee is
+# worked out from the cancellation policy and `cancelled`:
+#   - Sita cancelled her Swedish Massage 17 hours before it: the 50% late-cancellation fee.
+
+password: LotusWellness-Demo-2026
+
+customers:
+  - email: sita.gurung@example.com
+    bookings:
+      - {key: sita-1, service: Deep Tissue Massage, practitioner: Anjali Shrestha, starts: 2026-10-08T10:00}
+      - {key: sita-2, service: Physiotherapy Assessment, practitioner: Rohan Karki, starts: 2026-10-22T15:00}
+      - {key: sita-3, service: Swedish Massage, practitioner: Maya Gurung, starts: 2026-11-01T11:00,
+         cancelled: 2026-10-31T18:00}
+
+  - email: nabin.shrestha@example.com
+    bookings:
+      - {key: nabin-1, service: Private Yoga Session, practitioner: Maya Gurung, starts: 2026-10-15T07:00}
+      - {key: nabin-2, service: Sports Injury Rehabilitation, practitioner: Rohan Karki, starts: 2026-10-29T16:00}
+      - {key: nabin-3, service: Physiotherapy Follow-up, practitioner: Rohan Karki, starts: 2026-11-05T16:00}
+
+  # A new customer with no bookings yet.
+  - email: anisha.karki@example.com

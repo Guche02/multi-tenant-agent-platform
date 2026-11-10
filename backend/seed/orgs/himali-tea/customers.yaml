@@ -1,0 +1,51 @@
+# Test customers, created by the seed through the Supabase admin API (safe to re-run).
+# The password is for these fictional demo accounts only; the README lists it.
+#
+# Past orders are written as they were: unit_price is the price when ordered, and products.yaml
+# already holds today's stock, so these orders don't change it. Some differences are deliberate:
+#   - Aarav's last order paid 800 for Himalayan Breakfast Blend (now 850): "same as last time"
+#     should point out the price change.
+#   - Priya's first order had 4 Himalayan Steamed Green (3 left now): repeating it should report
+#     the shortage and offer alternatives.
+#   - Priya's latest order is shipped: changing or cancelling it should be refused.
+# Times are in the store's time zone. Each order's status history is filled in up to `status`.
+
+password: HimaliTea-Demo-2026
+
+customers:
+  - email: aarav.sharma@example.com
+    orders:
+      - key: aarav-1
+        placed: 2026-09-14T10:20
+        status: delivered
+        address: House 12, Jhamsikhel Marga, Lalitpur
+        items:
+          - {sku: HT-BLK-001, quantity: 2, unit_price: 1450}
+          - {sku: HT-WAR-001, quantity: 1, unit_price: 2400}
+      - key: aarav-2
+        placed: 2026-10-20T18:05
+        status: delivered
+        address: House 12, Jhamsikhel Marga, Lalitpur
+        items:
+          - {sku: HT-BLK-004, quantity: 3, unit_price: 800}
+          - {sku: HT-CHI-001, quantity: 2, unit_price: 750}
+
+  - email: priya.thapa@example.com
+    orders:
+      - key: priya-1
+        placed: 2026-10-05T09:40
+        status: delivered
+        address: Lakeside Road, Ward 6, Pokhara
+        items:
+          - {sku: HT-GRN-003, quantity: 1, unit_price: 1650}
+          - {sku: HT-GRN-002, quantity: 4, unit_price: 950}
+      - key: priya-2
+        placed: 2026-11-02T16:30
+        status: shipped
+        address: Lakeside Road, Ward 6, Pokhara
+        items:
+          - {sku: HT-HRB-001, quantity: 2, unit_price: 650}
+          - {sku: HT-HRB-002, quantity: 1, unit_price: 700}
+
+  # A new customer with no orders yet.
+  - email: bikash.rai@example.com
