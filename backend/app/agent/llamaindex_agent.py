@@ -40,7 +40,7 @@ def _to_llama(message: ChatMessage) -> LlamaChatMessage:
 class LlamaIndexAgent:
     async def run(self, context: AgentContext, history: list[ChatMessage]) -> AsyncIterator[AgentEvent]:
         toolset = TOOLSETS[context.config.agent.toolset]
-        tools = toolset.build_tools(context)
+        tools = await toolset.build_tools(context)
         agent = FunctionAgent(
             name=f"{context.org_slug}-assistant",
             description=f"Customer assistant for {context.org_name}",

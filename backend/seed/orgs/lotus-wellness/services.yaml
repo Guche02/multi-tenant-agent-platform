@@ -1,12 +1,22 @@
 # The live service list. Prices are in NPR. The knowledge base describes these services by the
 # same names, but never states durations or prices: those always come from this data.
 # Every session is one-to-one with a single practitioner.
+# tags: other words customers use for a service (what it's for, common short names). A service
+# name the agent can't match exactly is looked up in these. Optional.
 
-- {name: Swedish Massage, duration_minutes: 60, price: 3500}
-- {name: Deep Tissue Massage, duration_minutes: 60, price: 4200}
-- {name: Hot Stone Massage, duration_minutes: 90, price: 5500}
-- {name: Physiotherapy Assessment, duration_minutes: 60, price: 3000}
-- {name: Physiotherapy Follow-up, duration_minutes: 45, price: 2200}
-- {name: Sports Injury Rehabilitation, duration_minutes: 60, price: 3800}
-- {name: Private Yoga Session, duration_minutes: 60, price: 2500}
-- {name: Prenatal Yoga, duration_minutes: 60, price: 2800}
+- {name: Swedish Massage, duration_minutes: 60, price: 3500,
+   tags: [relaxing massage, relaxation, full body massage, stress]}
+- {name: Deep Tissue Massage, duration_minutes: 60, price: 4200,
+   tags: [back pain, stiff neck, knots, muscle tension, firm pressure]}
+- {name: Hot Stone Massage, duration_minutes: 90, price: 5500,
+   tags: [stones, heated stones, warm stone massage]}
+- {name: Physiotherapy Assessment, duration_minutes: 60, price: 3000,
+   tags: [physio, physical therapy, first physio visit, initial assessment]}
+- {name: Physiotherapy Follow-up, duration_minutes: 45, price: 2200,
+   tags: [physio, physical therapy, follow up, physio review]}
+- {name: Sports Injury Rehabilitation, duration_minutes: 60, price: 3800,
+   tags: [sports injury, rehab, sprain, running injury]}
+- {name: Private Yoga Session, duration_minutes: 60, price: 2500,
+   tags: [one-to-one yoga, beginner yoga, personal yoga]}
+- {name: Prenatal Yoga, duration_minutes: 60, price: 2800,
+   tags: [pregnancy yoga, maternity yoga, pregnant]}

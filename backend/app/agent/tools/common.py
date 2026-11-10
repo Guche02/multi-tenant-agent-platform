@@ -34,6 +34,12 @@ def result(**data: Any) -> str:
     return json.dumps(data, default=str, ensure_ascii=False)
 
 
+def one_of(values: list[str]) -> str:
+    """Returns ' One of: A, B, C.' to append to a tool or argument description, so the model uses
+    names that exist. Empty if there are none, e.g. an org whose catalogue isn't seeded yet."""
+    return f" One of: {', '.join(values)}." if values else ""
+
+
 def make_tool(fn: Callable[..., Awaitable[str]], name: str, description: str) -> FunctionTool:
     return FunctionTool.from_defaults(async_fn=fn, name=name, description=description)
 

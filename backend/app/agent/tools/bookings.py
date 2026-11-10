@@ -14,7 +14,7 @@ from llama_index.core.tools import FunctionTool
 from pydantic import Field
 
 from app.agent.base import AgentContext
-from app.agent.tools.common import CONFIRM_NEXT_STEP, confirmation_given, knowledge_tool, make_tool, result
+from app.agent.tools.common import CONFIRM_NEXT_STEP, confirmation_given, knowledge_tool, make_tool, one_of, result
 from app.db.session import session_factory
 from app.services import bookings
 from app.services.bookings import BookingError, Slot, SlotTaken
@@ -33,7 +33,6 @@ TOOL_LABELS = {
 DateArg = Annotated[str, Field(description="A date in YYYY-MM-DD, in studio time.")]
 TimeArg = Annotated[str, Field(description="A start time in 24-hour HH:MM, in studio time, e.g. 14:30.")]
 BookingNumber = Annotated[str, Field(description="The booking number, e.g. 7C1E09AB, from list_my_bookings.")]
-PractitionerArg = Annotated[str | None, Field(description="A practitioner's name. Omit for anyone who is free.")]
 
 
 def _parse_date(value: str) -> date:
@@ -50,9 +49,19 @@ def _parse_time(value: str) -> time:
         raise BookingError(f"{value!r} is not a time in HH:MM form.") from error
 
 
-def build_tools(ctx: AgentContext) -> list[FunctionTool]:
+async def build_tools(ctx: AgentContext) -> list[FunctionTool]:
     config = ctx.config
     tz = config.tz
+    # Read per request, so a service or practitioner added in the database shows up in the next chat.
+    async with session_factory()() as db:
+        service_names, practitioner_names = await bookings.catalogue_options(db, ctx.org_id)
+
+    # Listing the names lets the model pass one that exists. A near miss ("back pain") is still
+    # matched through the service's tags; see bookings.find_service.
+    ServiceArg = Annotated[str, Field(description="The service's name." + one_of(service_names))]
+    PractitionerArg = Annotated[
+        str | None, Field(description="A practitioner's name. Omit for anyone who is free." + one_of(practitioner_names))
+    ]
 
     def slot_out(slot: Slot) -> dict[str, Any]:
         return {"date": f"{slot.start:%Y-%m-%d}", "day": f"{slot.start:%A}", "start": f"{slot.start:%H:%M}",
@@ -70,7 +79,7 @@ def build_tools(ctx: AgentContext) -> list[FunctionTool]:
             return result(**await bookings.opening_hours(db, ctx.org_id, config))
 
     async def find_available_slots(
-        service: Annotated[str, Field(description="The service's name, e.g. 'Deep Tissue Massage'.")],
+        service: ServiceArg,
         start_date: DateArg,
         end_date: Annotated[str | None, Field(description="Last date to search (YYYY-MM-DD), at most 14 days on. Omit for one day.")] = None,
         practitioner: PractitionerArg = None,
@@ -105,7 +114,7 @@ def build_tools(ctx: AgentContext) -> list[FunctionTool]:
         return [slot_out(s) for s in slots]
 
     async def create_booking(
-        service: Annotated[str, Field(description="The service's name.")],
+        service: ServiceArg,
         date: DateArg,
         start_time: TimeArg,
         practitioner: PractitionerArg = None,
@@ -162,7 +171,10 @@ def build_tools(ctx: AgentContext) -> list[FunctionTool]:
         booking_number: BookingNumber,
         new_date: DateArg,
         new_start_time: TimeArg,
-        practitioner: Annotated[str | None, Field(description="Switch to another practitioner. Omit to keep the same one.")] = None,
+        practitioner: Annotated[
+            str | None,
+            Field(description="Switch to another practitioner. Omit to keep the same one." + one_of(practitioner_names)),
+        ] = None,
     ) -> str:
         try:
             async with session_factory()() as db:

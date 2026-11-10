@@ -23,7 +23,7 @@ from sqlalchemy import (
     func,
     text,
 )
-from sqlalchemy.dialects.postgresql import JSONB, ExcludeConstraint
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB, ExcludeConstraint
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -193,6 +193,8 @@ class Product(Base):
     category: Mapped[str] = mapped_column(Text, nullable=False)
     price: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
     stock: Mapped[int] = mapped_column(Integer, nullable=False)
+    # Other words customers use for it ("chiya", "back pain"). Search matches these as well as the name.
+    tags: Mapped[list[str]] = mapped_column(ARRAY(Text), nullable=False, server_default=text("'{}'"))
 
 
 class Order(Base):
@@ -278,6 +280,8 @@ class Service(Base):
     name: Mapped[str] = mapped_column(Text, nullable=False)
     duration_minutes: Mapped[int] = mapped_column(Integer, nullable=False)
     price: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
+    # Other words customers use for it ("chiya", "back pain"). Search matches these as well as the name.
+    tags: Mapped[list[str]] = mapped_column(ARRAY(Text), nullable=False, server_default=text("'{}'"))
 
 
 class Practitioner(Base):

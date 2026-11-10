@@ -2,7 +2,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
-from pydantic import SecretStr
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # The repo root, where .env lives.
@@ -27,6 +27,9 @@ class Settings(BaseSettings):
     # for testing the chat plumbing). LLM_MODEL overrides the provider's default model.
     llm_provider: Literal["mistral", "gemini", "placeholder"] = "mistral"
     llm_model: str | None = None
+    # The most tokens one LLM reply may use. A ceiling, not a target: short replies cost the same.
+    # Without it the Mistral client stops every reply at 512 tokens, mid-sentence.
+    llm_max_tokens: int = Field(default=2048, gt=0)
     gemini_api_key: SecretStr | None = None
 
     # Browsers accept Secure cookies on http://localhost, so this stays on in development too.

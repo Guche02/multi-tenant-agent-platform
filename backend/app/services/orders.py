@@ -101,11 +101,18 @@ async def search_products(
     limit: int = 10,
 ) -> list[dict[str, Any]]:
     stmt = select(Product).where(Product.org_id == org_id)
-    # Every word must appear in the name, category or SKU: "green tea" finds the Green Tea category.
+    # Every word must appear in the name, category, SKU or tags: "green tea" finds the Green Tea
+    # category, and "elaichi chiya" finds Cardamom Chai through its tags.
+    tags = func.array_to_string(Product.tags, " ")
     for word in (query or "").split():
         pattern = f"%{word}%"
         stmt = stmt.where(
-            or_(Product.name.ilike(pattern), Product.category.ilike(pattern), Product.sku.ilike(pattern))
+            or_(
+                Product.name.ilike(pattern),
+                Product.category.ilike(pattern),
+                Product.sku.ilike(pattern),
+                tags.ilike(pattern),
+            )
         )
     if category:
         stmt = stmt.where(Product.category.ilike(f"%{category.strip()}%"))
@@ -120,6 +127,16 @@ async def search_products(
         {"sku": p.sku, "name": p.name, "category": p.category, "price": str(p.price), "in_stock": p.stock}
         for p in products
     ]
+
+
+async def catalogue_options(db: AsyncSession, org_id: uuid.UUID) -> tuple[list[str], list[str]]:
+    """The org's product categories and product names, so the agent's tool descriptions can list
+    the values that actually exist. Names only: prices and stock are always looked up live."""
+    rows = (await db.execute(
+        select(Product.category, Product.name).where(Product.org_id == org_id).order_by(Product.category, Product.name)
+    )).all()
+    categories = list(dict.fromkeys(category for category, _ in rows))
+    return categories, [name for _, name in rows]
 
 
 async def _alternatives(db: AsyncSession, org_id: uuid.UUID, product: Product, quantity: int) -> list[dict[str, Any]]:

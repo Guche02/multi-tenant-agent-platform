@@ -11,7 +11,7 @@ from llama_index.core.tools import FunctionTool
 from pydantic import BaseModel, Field
 
 from app.agent.base import AgentContext
-from app.agent.tools.common import CONFIRM_NEXT_STEP, confirmation_given, knowledge_tool, make_tool, result
+from app.agent.tools.common import CONFIRM_NEXT_STEP, confirmation_given, knowledge_tool, make_tool, one_of, result
 from app.db.session import session_factory
 from app.services import orders
 from app.services.orders import ItemRequest, OrderError
@@ -47,13 +47,20 @@ def _summary(quote: orders.Quote, address: str, currency: str) -> dict[str, Any]
             "delivery_address": address}
 
 
-def build_tools(ctx: AgentContext) -> list[FunctionTool]:
+async def build_tools(ctx: AgentContext) -> list[FunctionTool]:
     tz = ctx.config.tz
     currency = ctx.config.currency
+    # Read per request, so a product added or renamed in the database shows up in the next chat.
+    async with session_factory()() as db:
+        categories, product_names = await orders.catalogue_options(db, ctx.org_id)
 
     async def search_products(
-        query: Annotated[str | None, Field(description="Words to match in the name or category, e.g. 'green tea'.")] = None,
-        category: Annotated[str | None, Field(description="Category, e.g. 'Black Tea', 'Teaware'.")] = None,
+        query: Annotated[
+            str | None,
+            Field(description="Words to match in the name, category, SKU or tags (other names customers use, "
+                              "e.g. 'chiya', 'caffeine-free', 'gift'). Every word must match."),
+        ] = None,
+        category: Annotated[str | None, Field(description="A category." + one_of(categories))] = None,
         min_price: Annotated[float | None, Field(description=f"Lowest price in {currency}.")] = None,
         max_price: Annotated[float | None, Field(description=f"Highest price in {currency}.")] = None,
         in_stock_only: Annotated[bool, Field(description="Only products in stock.")] = False,
@@ -216,8 +223,9 @@ def build_tools(ctx: AgentContext) -> list[FunctionTool]:
     return [
         knowledge_tool(ctx),
         make_tool(search_products, "search_products",
-                  "Finds products by name, category or price range, with live prices and stock. "
-                  "Use it for any question about what is available, how much it costs or how many are left."),
+                  "Finds products by name, category, tag or price range, with live prices and stock. "
+                  "Use it for any question about what is available, how much it costs or how many are left."
+                  + (f" Products sold: {', '.join(product_names)}." if product_names else "")),
         make_tool(create_order, "create_order",
                   "Places an order for the signed-in customer (cash on delivery). The first call returns a "
                   "summary to confirm; the call after the customer confirms places it."),

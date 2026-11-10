@@ -27,7 +27,8 @@ def get_llm() -> FunctionCallingLLM:
             raise RuntimeError("LLM_PROVIDER=mistral needs MISTRAL_API_KEY in .env.")
         # The SDK retries rate-limited (429) and failed requests with backoff: the free tier is tight.
         return MistralAI(
-            model=model, api_key=settings.mistral_api_key.get_secret_value(), temperature=TEMPERATURE, max_retries=5
+            model=model, api_key=settings.mistral_api_key.get_secret_value(), temperature=TEMPERATURE,
+            max_tokens=settings.llm_max_tokens, max_retries=5,
         )
 
     if provider == "gemini":
@@ -36,7 +37,8 @@ def get_llm() -> FunctionCallingLLM:
         if settings.gemini_api_key is None:
             raise RuntimeError("LLM_PROVIDER=gemini needs GEMINI_API_KEY in .env.")
         return GoogleGenAI(
-            model=model, api_key=settings.gemini_api_key.get_secret_value(), temperature=TEMPERATURE, max_retries=5
+            model=model, api_key=settings.gemini_api_key.get_secret_value(), temperature=TEMPERATURE,
+            max_tokens=settings.llm_max_tokens, max_retries=5,
         )
 
     raise RuntimeError(f"LLM_PROVIDER={provider!r} has no LLM.")

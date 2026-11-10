@@ -32,6 +32,14 @@ def read_yaml(path: Path) -> Any:
     return yaml.safe_load(path.read_text(encoding="utf-8"))
 
 
+def _tags(entry: dict[str, Any]) -> list[str]:
+    """An entry's optional tags, lower-cased and de-duplicated, for case-insensitive matching."""
+    tags = entry.get("tags") or []
+    if not isinstance(tags, list) or not all(isinstance(t, str) and t.strip() for t in tags):
+        raise ValueError(f"{entry.get('sku') or entry.get('name')}: tags must be a list of words")
+    return list(dict.fromkeys(t.strip().lower() for t in tags))
+
+
 async def upsert_org(db: AsyncSession, org_dir: Path) -> uuid.UUID:
     org = read_yaml(org_dir / "org.yaml")
     slug, name = org.pop("slug"), org.pop("name")
@@ -54,13 +62,14 @@ async def load_catalogue(db: AsyncSession, org_id: uuid.UUID, org_dir: Path) -> 
         stmt = insert(Product).values(
             [
                 {"id": uuid.uuid4(), "org_id": org_id, "sku": p["sku"], "name": p["name"],
-                 "category": p["category"], "price": Decimal(str(p["price"])), "stock": p["stock"]}
+                 "category": p["category"], "price": Decimal(str(p["price"])), "stock": p["stock"],
+                 "tags": _tags(p)}
                 for p in products
             ]
         )
         stmt = stmt.on_conflict_do_update(
             index_elements=["org_id", "sku"],
-            set_={col: stmt.excluded[col] for col in ("name", "category", "price", "stock")},
+            set_={col: stmt.excluded[col] for col in ("name", "category", "price", "stock", "tags")},
         )
         await db.execute(stmt)
         counts["products"] = len(products)
@@ -70,13 +79,14 @@ async def load_catalogue(db: AsyncSession, org_id: uuid.UUID, org_dir: Path) -> 
         stmt = insert(Service).values(
             [
                 {"id": uuid.uuid4(), "org_id": org_id, "name": s["name"],
-                 "duration_minutes": s["duration_minutes"], "price": Decimal(str(s["price"]))}
+                 "duration_minutes": s["duration_minutes"], "price": Decimal(str(s["price"])),
+                 "tags": _tags(s)}
                 for s in services
             ]
         )
         stmt = stmt.on_conflict_do_update(
             index_elements=["org_id", "name"],
-            set_={col: stmt.excluded[col] for col in ("duration_minutes", "price")},
+            set_={col: stmt.excluded[col] for col in ("duration_minutes", "price", "tags")},
         )
         await db.execute(stmt)
         counts["services"] = len(services)

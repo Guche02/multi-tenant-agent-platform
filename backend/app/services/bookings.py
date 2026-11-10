@@ -61,12 +61,19 @@ def _policy(config: OrgConfig) -> BookingPolicy:
 
 
 async def find_service(db: AsyncSession, org_id: uuid.UUID, name: str) -> Service:
-    """By name, ignoring case; a unique partial match also works ("hot stone")."""
-    name = name.strip()
+    """By name, ignoring case. Failing that, a unique partial match ("hot stone"), then a tag
+    ("back pain"), then part of a tag ("pregnancy"). The first of these that finds anything is
+    used, and it must find exactly one service."""
+    name = name.strip().lower()
     services = (await db.scalars(select(Service).where(Service.org_id == org_id))).all()
-    exact = [s for s in services if s.name.lower() == name.lower()]
-    partial = [s for s in services if name.lower() in s.name.lower()]
-    matches = exact or partial
+    tags = {s.id: [t.lower() for t in s.tags] for s in services}
+    tiers = [
+        [s for s in services if s.name.lower() == name],
+        [s for s in services if name in s.name.lower()],
+        [s for s in services if name in tags[s.id]],
+        [s for s in services if any(name in tag for tag in tags[s.id])],
+    ]
+    matches = next((tier for tier in tiers if tier), [])
     if len(matches) != 1:
         names = ", ".join(s.name for s in services)
         raise BookingError(f"I couldn't identify the service {name!r}. Services: {names}.")
@@ -83,6 +90,16 @@ async def find_practitioner(db: AsyncSession, org_id: uuid.UUID, name: str) -> P
         names = ", ".join(p.name for p in practitioners)
         raise BookingError(f"I couldn't identify the practitioner {name!r}. Practitioners: {names}.")
     return matches[0]
+
+
+async def catalogue_options(db: AsyncSession, org_id: uuid.UUID) -> tuple[list[str], list[str]]:
+    """The org's service names and practitioner names, so the agent's tool descriptions can list
+    the values that actually exist. Names only: durations, prices and slots are looked up live."""
+    services = (await db.scalars(select(Service.name).where(Service.org_id == org_id).order_by(Service.name))).all()
+    practitioners = (
+        await db.scalars(select(Practitioner.name).where(Practitioner.org_id == org_id).order_by(Practitioner.name))
+    ).all()
+    return list(services), list(practitioners)
 
 
 async def practitioners_for(db: AsyncSession, service: Service) -> list[Practitioner]:
