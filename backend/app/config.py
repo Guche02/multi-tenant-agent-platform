@@ -1,5 +1,6 @@
 from functools import lru_cache
 from pathlib import Path
+from typing import Literal
 
 from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -19,8 +20,14 @@ class Settings(BaseSettings):
     # Full admin access to Supabase. Server only, never sent to a browser.
     supabase_secret_key: SecretStr
 
-    # Embeddings for the knowledge base (and, later, the LLM). Needed by `python -m app.seed`.
+    # Knowledge-base embeddings always use Mistral. Needed by `python -m app.seed`.
     mistral_api_key: SecretStr | None = None
+
+    # The chat agent's LLM: "mistral", "gemini", or "placeholder" (a canned reply, no API calls,
+    # for testing the chat plumbing). LLM_MODEL overrides the provider's default model.
+    llm_provider: Literal["mistral", "gemini", "placeholder"] = "mistral"
+    llm_model: str | None = None
+    gemini_api_key: SecretStr | None = None
 
     # Browsers accept Secure cookies on http://localhost, so this stays on in development too.
     cookie_secure: bool = True

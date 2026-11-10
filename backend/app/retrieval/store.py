@@ -20,6 +20,7 @@ from sqlalchemy.engine import Engine, make_url
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 
 from app.config import get_settings
+from app.db.session import apply_connection_settings
 from app.retrieval import KB_TABLE_NAME
 
 EMBEDDING_MODEL = "mistral-embed"
@@ -42,10 +43,11 @@ def kb_engines() -> tuple[Engine, AsyncEngine]:
     table and the async one (asyncpg) for queries."""
     url = get_settings().database_url
     sync_url = make_url(url).set(drivername="postgresql+psycopg2")
-    return (
-        create_engine(sync_url, pool_pre_ping=True),
-        create_async_engine(url, pool_pre_ping=True),
-    )
+    engine = create_engine(sync_url, pool_pre_ping=True)
+    async_engine = create_async_engine(url, pool_pre_ping=True)
+    apply_connection_settings(engine)
+    apply_connection_settings(async_engine.sync_engine)
+    return engine, async_engine
 
 
 @lru_cache

@@ -1,6 +1,7 @@
 import uuid
 from datetime import date, datetime, time
 from decimal import Decimal
+from typing import Any
 
 from sqlalchemy import (
     CheckConstraint,
@@ -22,7 +23,7 @@ from sqlalchemy import (
     func,
     text,
 )
-from sqlalchemy.dialects.postgresql import ExcludeConstraint
+from sqlalchemy.dialects.postgresql import JSONB, ExcludeConstraint
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -67,6 +68,8 @@ class Organization(Base):
     id: Mapped[uuid.UUID] = _id_column()
     slug: Mapped[str] = mapped_column(Text, unique=True, nullable=False)
     name: Mapped[str] = mapped_column(Text, nullable=False)
+    # Agent and policy settings; see app/tenancy/org_config.py (OrgConfig).
+    config: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, server_default=text("'{}'::jsonb"))
     created_at: Mapped[datetime] = _created_at_column()
 
 
@@ -108,6 +111,36 @@ class Conversation(Base):
     created_at: Mapped[datetime] = _created_at_column()
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+
+class PendingAction(Base):
+    """An order or booking the agent has shown the customer and is waiting for them to confirm.
+
+    The agent's tools record one when they first see a request, and carry it out only when called
+    again with the same details on the customer's next turn. So confirmation is enforced by the
+    server: the model can't place an order in the same turn it first shows the summary.
+    """
+
+    __tablename__ = "pending_actions"
+    __table_args__ = (
+        UniqueConstraint("conversation_id", "action", "args_hash"),
+        ForeignKeyConstraint(
+            ["org_id", "user_id", "conversation_id"],
+            ["conversations.org_id", "conversations.user_id", "conversations.id"],
+            ondelete="CASCADE",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = _id_column()
+    org_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
+    user_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
+    conversation_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
+    action: Mapped[str] = mapped_column(Text, nullable=False)  # e.g. "create_order"
+    # A hash of the action's normalised arguments: confirming means repeating the same request.
+    args_hash: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=text("clock_timestamp()"), nullable=False
     )
 
 

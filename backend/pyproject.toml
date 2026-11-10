@@ -9,6 +9,8 @@ dependencies = [
     "fastapi>=0.162.2",
     "llama-index-core>=0.14.25",
     "llama-index-embeddings-mistralai>=0.6.0",
+    "llama-index-llms-google-genai>=0.11.3",
+    "llama-index-llms-mistralai>=0.11.0",
     "llama-index-vector-stores-postgres>=0.9.0",
     "pgvector>=0.5.1",
     "pydantic-settings>=2.16.2",
@@ -17,5 +19,6 @@ dependencies = [
     "sqlalchemy[asyncio]>=2.0.40,<2.1",
     "supabase>=2.34.1",
     "truststore>=0.10.5",
+    "tzdata>=2026.6",
     "uvicorn[standard]>=0.54.0",
 ]

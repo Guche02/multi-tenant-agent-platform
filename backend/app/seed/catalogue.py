@@ -25,6 +25,7 @@ from app.db.models import (
     Product,
     Service,
 )
+from app.tenancy.org_config import OrgConfig
 
 
 def read_yaml(path: Path) -> Any:
@@ -33,8 +34,13 @@ def read_yaml(path: Path) -> Any:
 
 async def upsert_org(db: AsyncSession, org_dir: Path) -> uuid.UUID:
     org = read_yaml(org_dir / "org.yaml")
-    stmt = insert(Organization).values(id=uuid.uuid4(), slug=org["slug"], name=org["name"])
-    stmt = stmt.on_conflict_do_update(index_elements=["slug"], set_={"name": stmt.excluded.name})
+    slug, name = org.pop("slug"), org.pop("name")
+    # Everything else is the org's config; validating here catches a typo before it's stored.
+    config = OrgConfig.model_validate(org).model_dump(mode="json")
+    stmt = insert(Organization).values(id=uuid.uuid4(), slug=slug, name=name, config=config)
+    stmt = stmt.on_conflict_do_update(
+        index_elements=["slug"], set_={"name": stmt.excluded.name, "config": stmt.excluded.config}
+    )
     # RETURNING gives the id whether the row was inserted or already existed.
     return (await db.execute(stmt.returning(Organization.id))).scalar_one()
 

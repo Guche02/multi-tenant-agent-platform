@@ -1,2 +1,10 @@
 slug: himali-tea
 name: Himali Tea House
+timezone: Asia/Kathmandu
+currency: NPR
+language: English
+
+agent:
+  toolset: orders
+  business: an online store selling loose-leaf Nepali tea, herbal infusions and teaware, with free cash-on-delivery shipping across Nepal
+  greeting: Namaste! I'm the Himali Tea House assistant. I can help you choose a tea, place or track an order, or answer questions about delivery and returns.

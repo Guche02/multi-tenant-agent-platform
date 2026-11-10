@@ -2,8 +2,10 @@
 
 import uuid
 from collections.abc import AsyncIterator
-from dataclasses import dataclass
-from typing import Literal, Protocol
+from dataclasses import dataclass, field
+from typing import Any, Literal, Protocol
+
+from app.tenancy.org_config import OrgConfig
 
 
 @dataclass(frozen=True)
@@ -17,7 +19,9 @@ class AgentContext:
     org_id: uuid.UUID
     org_slug: str
     org_name: str
+    config: OrgConfig
     user_id: uuid.UUID
+    customer_email: str
     conversation_id: uuid.UUID
 
 
@@ -42,7 +46,16 @@ class ToolActivity:
     label: str
 
 
-AgentEvent = TextDelta | ToolActivity
+@dataclass(frozen=True)
+class ToolResult:
+    """A tool's structured result, for the UI to draw cards from (an order summary, time slots,
+    citations). The model sees the same data as text."""
+
+    tool: str
+    data: dict[str, Any] = field(default_factory=dict)
+
+
+AgentEvent = TextDelta | ToolActivity | ToolResult
 
 
 class Agent(Protocol):

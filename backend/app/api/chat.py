@@ -10,7 +10,7 @@ from fastapi.sse import EventSourceResponse, format_sse_event
 from pydantic import BaseModel, ConfigDict, StringConstraints
 
 from app.agent import get_agent
-from app.agent.base import Agent, AgentContext, ChatMessage, TextDelta, ToolActivity
+from app.agent.base import Agent, AgentContext, ChatMessage, TextDelta, ToolActivity, ToolResult
 from app.db.session import DbSession
 from app.services.chat import (
     RATE_LIMIT_MESSAGES,
@@ -23,6 +23,7 @@ from app.services.chat import (
     save_reply,
 )
 from app.tenancy.context import Tenant
+from app.tenancy.org_config import OrgConfig
 
 logger = logging.getLogger(__name__)
 
@@ -55,6 +56,7 @@ async def chat(body: ChatRequest, tenant: Tenant, db: DbSession) -> EventSourceR
     Events, in order:
       conversation  {"id", "title"}        which conversation the message went to
       tool          {"tool", "label"}      the agent is using a tool (zero or more)
+      tool_result   {"tool", "data"}       a tool's structured result, for UI cards (zero or more)
       token         {"text"}               the next piece of the reply (zero or more)
       done          {"message_id"}         the reply is complete and saved
       error         {"message"}            the agent failed; any partial reply is saved
@@ -96,7 +98,9 @@ async def chat(body: ChatRequest, tenant: Tenant, db: DbSession) -> EventSourceR
         org_id=tenant.org.id,
         org_slug=tenant.org.slug,
         org_name=tenant.org.name,
+        config=OrgConfig.model_validate(tenant.org.config),
         user_id=tenant.user.id,
+        customer_email=tenant.user.email,
         conversation_id=conversation.id,
     )
     stream = _stream_reply(get_agent(tenant.org), context, history, conversation.title)
@@ -119,6 +123,8 @@ async def _stream_reply(
                 yield _sse("token", {"text": event.text})
             elif isinstance(event, ToolActivity):
                 yield _sse("tool", {"tool": event.tool, "label": event.label})
+            elif isinstance(event, ToolResult):
+                yield _sse("tool_result", {"tool": event.tool, "data": event.data})
     except Exception:
         logger.exception("Agent failed in conversation %s", context.conversation_id)
         failed = True

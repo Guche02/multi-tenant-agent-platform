@@ -1,2 +1,20 @@
 slug: lotus-wellness
 name: Lotus Wellness Studio
+timezone: Asia/Kathmandu
+currency: NPR
+language: English
+
+agent:
+  toolset: bookings
+  business: a massage, physiotherapy and yoga studio in Jhamsikhel, Lalitpur, where every session is one-to-one with a single practitioner
+  greeting: Namaste! I'm the Lotus Wellness Studio assistant. I can tell you about our services and practitioners, find a free time, and book, move or cancel your sessions.
+
+# The knowledge base's cancellation policy states the same numbers.
+booking_policy:
+  slot_interval_minutes: 30
+  min_notice_hours: 2
+  max_days_ahead: 30
+  free_cancellation_hours: 24
+  late_cancellation_fee_percent: 50
+  no_show_hours: 2
+  reschedule_cutoff_hours: 24
