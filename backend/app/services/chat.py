@@ -37,6 +37,36 @@ async def get_own_conversation(
     )
 
 
+async def list_conversations(db: AsyncSession, tenant: TenantContext, limit: int = 100) -> list[Conversation]:
+    """The user's conversations in this org, most recently active first."""
+    return list(
+        await db.scalars(
+            select(Conversation)
+            .where(Conversation.org_id == tenant.org.id, Conversation.user_id == tenant.user.id)
+            .order_by(Conversation.updated_at.desc())
+            .limit(limit)
+        )
+    )
+
+
+async def list_messages(db: AsyncSession, tenant: TenantContext, conversation_id: uuid.UUID) -> list[Message]:
+    return list(
+        await db.scalars(
+            select(Message)
+            .where(
+                Message.conversation_id == conversation_id,
+                Message.org_id == tenant.org.id,
+                Message.user_id == tenant.user.id,
+            )
+            .order_by(Message.created_at, Message.id)
+        )
+    )
+
+
+def clean_title(title: str) -> str:
+    return _title_from(title)
+
+
 async def enforce_rate_limit(db: AsyncSession, user_id: uuid.UUID) -> None:
     """Allows RATE_LIMIT_MESSAGES user messages per rolling RATE_LIMIT_WINDOW.
 

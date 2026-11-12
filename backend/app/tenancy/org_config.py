@@ -6,10 +6,12 @@ of business needs only configuration and seed data, no code.
 """
 
 from functools import cached_property
-from typing import Literal
+from typing import Annotated, Literal
 from zoneinfo import ZoneInfo
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
+
+HexColour = Annotated[str, Field(pattern=r"^#[0-9a-fA-F]{6}$")]
 
 
 class AgentConfig(BaseModel):
@@ -21,6 +23,21 @@ class AgentConfig(BaseModel):
     business: str
     # Shown when a customer opens the chat.
     greeting: str
+
+
+class Branding(BaseModel):
+    """How the org's entry page and chat look. Public: the sign-in page shows it."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    # Buttons, links, the customer's message bubbles.
+    primary: HexColour = "#2f5d8a"
+    # Text on top of `primary`.
+    on_primary: HexColour = "#ffffff"
+    # A soft background for highlights: the entry page, the selected conversation.
+    tint: HexColour = "#eef3f8"
+    # One line under the org's name on its entry page.
+    tagline: str = ""
 
 
 class BookingPolicy(BaseModel):
@@ -46,6 +63,7 @@ class OrgConfig(BaseModel):
     currency: str
     language: str = "English"
     agent: AgentConfig
+    branding: Branding = Branding()
     booking_policy: BookingPolicy | None = None
 
     @cached_property

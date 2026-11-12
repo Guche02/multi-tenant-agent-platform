@@ -1,8 +1,17 @@
-# Run from the repo root. Each target runs in backend/ with uv.
-.PHONY: install migrate seed seed-catalogue eval eval-list
+# Run from the repo root. Backend targets run in backend/ with uv, frontend ones in frontend/ with npm.
+.PHONY: install migrate seed seed-catalogue api web eval eval-list
 
 install:
 	cd backend && uv sync
+	cd frontend && npm install
+
+# The API on http://localhost:8000. Run `make web` in a second terminal.
+api:
+	cd backend && uv run uvicorn app.main:app --port 8000
+
+# The chat UI on http://localhost:3000 (passes /api to the API above).
+web:
+	cd frontend && npm run dev
 
 migrate:
 	cd backend && uv run alembic upgrade head
@@ -15,8 +24,8 @@ seed: migrate
 seed-catalogue: migrate
 	cd backend && uv run python -m app.seed --skip-kb
 
-# The agent evals: every case in backend/evals/cases.yaml, expected vs actual answer, tools and
-# database state. Open backend/evals/table_results.html in a browser (also .md). Not graded.
+# The agent evals: the 24 scenarios in backend/evals/cases.yaml, pass/fail per scenario from fixed
+# checks on the database, tools and reply. Open backend/evals/table_results.html (also .md).
 # Options with ARGS, e.g. make eval ARGS="--org himali-tea" or ARGS="--only over_stock",
 # or ARGS="--dry-run" to test the setup without LLM calls.
 eval:

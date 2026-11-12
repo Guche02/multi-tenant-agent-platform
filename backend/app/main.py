@@ -5,6 +5,8 @@ from fastapi import FastAPI
 
 from app.api.auth import router as auth_router
 from app.api.chat import router as chat_router
+from app.api.conversations import router as conversations_router
+from app.api.orgs import router as orgs_router
 from app.auth.supabase import SupabaseAuth
 from app.config import get_settings
 
@@ -24,3 +26,5 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 app = FastAPI(title="Agent Platform", lifespan=lifespan)
 app.include_router(auth_router, prefix="/api")
 app.include_router(chat_router, prefix="/api")
+app.include_router(conversations_router, prefix="/api")
+app.include_router(orgs_router, prefix="/api")

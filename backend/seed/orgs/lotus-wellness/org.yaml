@@ -18,3 +18,10 @@ booking_policy:
   late_cancellation_fee_percent: 50
   no_show_hours: 2
   reschedule_cutoff_hours: 24
+
+# The entry page and chat colours (hex), and the line under the name.
+branding:
+  primary: "#8a3f6b"
+  on_primary: "#ffffff"
+  tint: "#f7eef3"
+  tagline: Massage, physiotherapy and yoga in Jhamsikhel, Lalitpur
