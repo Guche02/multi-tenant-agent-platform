@@ -7,6 +7,10 @@ One chat platform hosting an AI agent for each of two fictional businesses:
 
 Each org has its own knowledge base, catalogue, customers and data. A customer of one can't reach the other's agent or data by any route.
 
+## Demo video
+
+**[Watch the demo video](https://drive.google.com/file/d/1jd3myKJhnbhyduDUBPLio-PnPUeu6ga6/view?usp=sharing)**: a Himali Tea House order placed, edited, tracked and reordered; a Lotus Wellness booking made and a conflicting reschedule refused; and a Himali customer being blocked from Lotus.
+
 **Stack:** FastAPI + SQLAlchemy (async) on Supabase Postgres with pgvector · Supabase Auth · LlamaIndex (agent and retrieval) · Mistral by default, switchable to Gemini · Next.js 15 + TypeScript + Tailwind.
 
 ---
@@ -46,13 +50,13 @@ You can also create an account on an org's entry page. Signing up there makes th
 
 ```
 Browser ── Next.js (frontend/) ── /api/* proxied, same origin ──▶ FastAPI (backend/app)
-                                                                    │
-         auth (Supabase Auth) ◀── api/auth.py                       │
+                                                                     |
+        auth (Supabase Auth) ◀── api/auth.py                        ▼ 
                                   api/chat.py ── SSE stream ◀── agent/ (LlamaIndex FunctionAgent)
-                                  api/conversations.py               │  tools bound to org + customer
-                                  api/orgs.py                         ▼
+                                  api/conversations.py               │  tools bound to org + customer                     ▼
+                                  api/orgs.py                         
                                                      services/ (orders, bookings: the business rules)
-                                                                    │
+                                                                     │
                            Supabase Postgres: orgs, users, orders, bookings, conversations, …
                            + pgvector table for the knowledge bases (retrieval/)
 ```

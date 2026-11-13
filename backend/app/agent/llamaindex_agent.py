@@ -60,8 +60,9 @@ class LlamaIndexAgent:
         try:
             async for event in handler.stream_events():
                 if isinstance(event, AgentStream):
-                    if event.delta:
-                        yield TextDelta(event.delta)
+                    text = _reply_text(event)
+                    if text:
+                        yield TextDelta(text)
                 elif isinstance(event, ToolCallResult):
                     yield ToolResult(event.tool_name, _parse(event.tool_output.content))
                 elif isinstance(event, ToolCall):
@@ -72,6 +73,33 @@ class LlamaIndexAgent:
             # The customer pressed Stop, or something failed: don't leave the agent running.
             if not handler.done():
                 await handler.cancel_run()
+
+
+def _reply_text(event: AgentStream) -> str:
+    """The reply text in one streamed piece, without the model's reasoning.
+
+    Mistral's models stream their reasoning as "thinking" chunks next to the reply's "text" chunks.
+    The LlamaIndex Mistral integration (0.11) adds the thinking to `delta` too, one line per chunk
+    (it only separates it for the models on its own reasoning list), so the customer would see it.
+    For Mistral, the text is taken from `raw` instead, keeping only the reply. `raw` is either the
+    whole stream event (when the content is a plain string) or, because the integration's loop
+    reuses the name `chunk`, the last content chunk itself: {"type": "thinking" | "text", ...}.
+    Other providers use `delta` as it is.
+    """
+    raw = event.raw if isinstance(event.raw, dict) else {}
+    if raw.get("type") == "thinking":
+        return ""
+    if raw.get("type") == "text":
+        return raw.get("text") or ""
+    choices = (raw.get("data") or {}).get("choices") or []
+    if not choices:
+        return event.delta
+    content = (choices[0].get("delta") or {}).get("content")
+    if not content:
+        return ""
+    if isinstance(content, str):
+        return content
+    return "".join(c.get("text") or "" for c in content if isinstance(c, dict) and c.get("type") == "text")
 
 
 def _parse(content: str) -> dict[str, Any]:
